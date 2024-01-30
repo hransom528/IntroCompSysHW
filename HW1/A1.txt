@@ -1,0 +1,2 @@
+This is a test file for Merge Files.
+Record A1 v1
