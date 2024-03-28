@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     // Get values of program arguments
     int L = atoi(argv[1]);
     int H = atoi(argv[2]);
-    int PN = atoi(argv[3]);
+    //int PN = atoi(argv[3]);
 
     // Check L bounds
     if (L < 10000) {
@@ -47,17 +47,21 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < L; i++) {
         randVals[i] = rand();
     }
+    printf("%d\n", randVals[0]);
+    printf("%d\n", randVals[1]);
 
     // TODO: Generate random keys
     int keys[H];
     for (int i = 0; i < H; i++) {
         keys[i] = -((rand() % 59) + 1);
+        printf("Key #%d: %d\n", i+1, keys[i]);
     }
 
     // TODO: Generate random positions of keys and insert keys
     int keyPos[H];
     for (int i = 0; i < H; i++) {
         keyPos[i] = rand() % L; 
+        printf("Key #%d at position %d\n", i+1, keyPos[i]);
         randVals[keyPos[i]] = keys[i];
     }
 
