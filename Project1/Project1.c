@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 // Generate file with list of L random integers and H random keys
 int genRandomVals(int L, int H) {
@@ -21,10 +22,20 @@ int genRandomVals(int L, int H) {
 
     // Generate random keys
     int keys[H];
+    int min = 0;
+    int avg = 0;
     for (int i = 0; i < H; i++) {
         keys[i] = -((rand() % 59) + 1);
+        avg += keys[i];
+        if (keys[i] < min) {
+            min = keys[i];
+        }
         //printf("Key #%d: %d\n", i+1, keys[i]);
     }
+    avg = -1 * (avg / H); // Calculate average
+    int max = -1 * min; // Invert min to find max
+    printf("Key Max: %d\n", max);
+    printf("Key Avg: %d\n", avg);
 
     // Generate random positions of keys and insert keys
     int keyPos[H];
@@ -75,27 +86,88 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    // Check PN bounds
+    if ((PN < 1) || (PN > 8)) {
+        printf("Invalid PN value (%d). PN needs to be between 1 and 8!\n", PN);
+        exit(1);
+    }
+
     // Generate randomized file
     int status = genRandomVals(L, H);
     if (!status) {
         printf("Random generation complete.\n");
     }
-    else if (status == 1) {
+    else {
         printf("Error! Random file could not be generated!\n");
         return 1;
     }
 
-    // Open generated random file
+    // Open generated random file and read vals into array
     fptr = fopen("generatedList.txt", "r");
     if (!fptr) { // Error on file open
         printf("Error! Random generated file could not be opened!\n");
         return 2;
     }
-
-    // TODO: Perform DFS or BFS
-    printf("Beginning key search...\n");
-
-    // Close the file and return
+    int randVals[L];
+    int bufferLen = 255;
+    char buffer[bufferLen];
+    int i = 0;
+    while(fgets(buffer, bufferLen, fptr)) { // Reads values into randVals from file
+        randVals[i] = atoi(buffer);
+        i++;
+    }   
+    /*for (int i = 0; i < L; i++) {
+        printf("Value #%d: %d\n", i+1, randVals[i]);
+    }*/
     fclose(fptr);
+
+    // Calculate split points for array
+    int splitPoints[PN];
+    int splitSize = L / PN;
+    printf("Split size: %d\n", splitSize);
+    splitPoints[0] = 0;
+    splitPoints[PN] = L;
+    for (int i = 1; i < PN; i++) {
+        splitPoints[i] = i * splitSize;
+    }
+    for (int i = 0; i < PN+1; i++) {
+        printf("Split point #%d: %d\n", i, splitPoints[i]);
+    }
+    // TODO: Split randVals into subprocess arrays
+
+    // TODO: Perform BFS search
+    int pipefd[PN][2];
+    int status[PN]; 
+    pid_t pid = 1;
+    printf("Beginning BFS key search...\n");
+
+    /*
+    for (int i = 0; (i < PN) && pid; i++) {
+        // Create pipe for ith child process
+        if (pipe(pipefd[i]) == -1) {
+            printf("Error! Pipe could not be created!\n");
+            return 3;
+        }
+
+        // Create new processes
+        pid_t pid = fork();
+        if (pid == -1) {
+            printf("Error! Fork could not be performed!\n");
+            return 4;
+        }
+        else if (pid == 0) { // Child process
+            
+            close(pipefd[i][0]);
+        }
+        else { // Parent process
+            close(pipefd[i][1]);
+            waitpid(pid,&status[i],0);
+        }
+    */
+
+
+    // TODO: Perform DFS search
+
+    // Return
     return 0;
 }

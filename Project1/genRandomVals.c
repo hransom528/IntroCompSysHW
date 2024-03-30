@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Attempt to create the file
-    fptr = fopen("generatedlist.txt", "w");
+    fptr = fopen("generatedList.txt", "w");
     if (!fptr) {
         // TODO: Error on file create
         exit(1);
@@ -49,10 +49,20 @@ int main(int argc, char *argv[]) {
 
     // Generate random keys
     int keys[H];
+    int min = 0;
+    int avg = 0;
     for (int i = 0; i < H; i++) {
         keys[i] = -((rand() % 59) + 1);
+        avg += keys[i];
+        if (keys[i] < min) {
+            min = keys[i];
+        }
         //printf("Key #%d: %d\n", i+1, keys[i]);
     }
+    avg = -1 * (avg / H); // Calculate average
+    int max = -1 * min; // Invert min to find max
+    printf("Key Max: %d\n", max);
+    printf("Key Avg: %d\n", avg);
 
     // Generate random positions of keys and insert keys
     int keyPos[H];
