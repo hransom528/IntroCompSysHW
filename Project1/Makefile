@@ -1,11 +1,15 @@
 CC = gcc
 CFLAGS = -Wall -O2
 
-all: Project1 Project1Part2 genRandomVals
+all: Project1 Project1Part2 genRandomVals Project1Liam
 
 Project1: Project1.c
 	$(CC) $(CFLAGS) Project1.c -o Project1
 	chmod +x Project1
+
+Project1: Project1Liam.c
+	$(CC) $(CFLAGS) Project1Liam.c -o Project1Liam
+	chmod +x Project1Liam
 
 Project1Part2: Project1Part2.c
 	$(CC) $(CFLAGS) Project1Part2.c -o Project1Part2
@@ -16,4 +20,4 @@ genRandomVals: genRandomVals.c
 	chmod +x genRandomVals
 
 clean:
-	rm Project1 Project1Part2 genRandomVals
+	rm Project1 Project1Part2 genRandomVals Project1Liam
