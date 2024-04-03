@@ -57,100 +57,8 @@ int genRandomVals(int L, int H) {
     return 0;
 }
 
-// MAIN
-int main(int argc, char *argv[]) {
-    FILE *fptr;
 
-    // Set up serial time measurements
-    clock_t startSerial, endSerial;
-    double cpu_time_used_serial;
-    startSerial = clock();
-
-    // Initialize random generator
-    srand(time(NULL));
-
-    // Incorrect number of arguments
-    if (argc != 4) {
-        printf("Incorrect number of arguments (%d), should be 3!\n", argc-1);
-        exit(1);
-    }
-
-    // Get values of program arguments
-    int L = atoi(argv[1]);
-    int H = atoi(argv[2]);
-    int PN = atoi(argv[3]);
-
-    // Check L bounds
-    if (L < 10000) {
-        printf("Invalid L value (%d). L needs to be at least 10,000!\n", L);
-        exit(1);
-    }
-
-    // Check H bounds
-    if ((H < 30) || (H > 60)) {
-        printf("Invalid H value (%d). H needs to be between 30 and 60!\n", H);
-        exit(1);
-    }
-
-    // Check PN bounds
-    if ((PN < 1) || (PN > 8)) {
-        printf("Invalid PN value (%d). PN needs to be between 1 and 8!\n", PN);
-        exit(1);
-    }
-
-    // Generate randomized file
-    int genReturnCode = genRandomVals(L, H);
-    if (!genReturnCode) {
-        printf("Random generation complete.\n");
-    }
-    else {
-        printf("Error! Random file could not be generated!\n");
-        return 1;
-    }
-
-    // Open generated random file and read vals into array
-    fptr = fopen("generatedList.txt", "r");
-    if (!fptr) { // Error on file open
-        printf("Error! Random generated file could not be opened!\n");
-        return 2;
-    }
-    int randVals[L];
-    int bufferLen = 255;
-    char buffer[bufferLen];
-    int i = 0;
-    while(fgets(buffer, bufferLen, fptr)) { // Reads values into randVals from file
-        randVals[i] = atoi(buffer);
-        i++;
-    }   
-    /*for (int i = 0; i < L; i++) {
-        printf("Value #%d: %d\n", i+1, randVals[i]);
-    }*/
-    fclose(fptr);
-
-    // Statically calculate split points for array
-    int splitPoints[PN];
-    int splitSize = L / PN;
-    printf("Split size: %d\n", splitSize);
-    splitPoints[0] = 0;
-    splitPoints[PN] = L;
-    for (int i = 1; i < PN; i++) {
-        splitPoints[i] = i * splitSize;
-    }
-    for (int i = 0; i < PN+1; i++) {
-        printf("Split point #%d: %d\n", i, splitPoints[i]);
-    }
-
-    // Measure time taken by serial (non-parallel) code
-    endSerial = clock();
-    cpu_time_used_serial = ((double) (endSerial - startSerial)) / CLOCKS_PER_SEC;
-    printf("Serial time duration: %lf\n", cpu_time_used_serial);    // Return
-    return 0;
-    int BFS = BFSSearch(PN, splitPoints, randVals);
-    printf("Beginning DFS key search...\n");
-    int DFS = DFSSearch(PN, splitPoints, randVals, 0);
-}
-
-int BFSSearch(int PN, int * splitPoints, int * RandVals){
+int BFSSearch(int PN, int * splitPoints, int * randVals){
     // Set up BFS time measurements
     clock_t startBFS, endBFS;
     double cpu_time_used_bfs;
@@ -252,7 +160,7 @@ int BFSSearch(int PN, int * splitPoints, int * RandVals){
     return 0;
 }
 
-int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
+int DFSSearch(int PN, int * splitPoints, int * randVals, int depth){
     if(depth >= PN){
         return -1;
     }
@@ -272,13 +180,13 @@ int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
     double cpu_time_used_dfs;
     startDFS = clock();
 
-    // Create pipe for ith child process
-    if (pipe(pipefdwrite[i]) == -1) {
+    // Create pipe for the child process
+    if (pipe(pipefdwrite[depth]) == -1) {
         printf("Error! Pipe could not be created!\n");
         return 3;
     }
     
-    pid_t PID = fork();
+     PID = fork();
 
     if (PID == -1) { // Error on fork()
         printf("Error! Fork could not be performed!\n");
@@ -288,16 +196,16 @@ int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
         // Print out process info
         childPID = getpid();
         parentPID = getppid();
-        printf("Child process #%d created with PID: %d and Parent PID: %d\n", i, childPID[i], parentPID[i]);
+        printf("Child process #%d created with PID: %d and Parent PID: %d\n", depth, childPID, parentPID);
         //Recursively create leaves.
-        DFSSearch(PN, splitPoints, RandVals, depth + 1);
+        DFSSearch(PN, splitPoints, randVals, depth + 1);
         int keyCount = 0;
         int max = 0;
         int avg = 0;
         int startPoint = splitPoints[depth];
         int endPoint = splitPoints[depth+1];
         //int len = endPoint - startPoint;
-        close(pipefdwrite[i][0]);
+        close(pipefdwrite[depth][0]);
 
         for(int j = startPoint; j < endPoint; j++){
             // Checks iteratively if its a key value and counts it.
@@ -316,9 +224,9 @@ int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
         avg = avg / keyCount;
 
         // Write keyCount, max, and avg to parent
-        write(pipefdwrite[depth][1], &keyCount[depth], sizeof(keyCount[depth]));
-        write(pipefdwrite[depth][1], &max[depth], sizeof(max[depth]));
-        write(pipefdwrite[depth][1], &avg[depth], sizeof(avg[depth]));
+        write(pipefdwrite[depth][1], &keyCount, sizeof(keyCount));
+        write(pipefdwrite[depth][1], &max, sizeof(max));
+        write(pipefdwrite[depth][1], &avg, sizeof(avg));
         close(pipefdwrite[depth][1]);
 
         return 0; // Exit child process
@@ -334,10 +242,10 @@ int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
 
         // Inspect DFS process tree
         //int pstreeCode = system("pstree -p");
-        waitpid(pid, &status[depth], 0);
+        waitpid(PID, &status[depth], 0);
     }
 
-    if (depth = 0){ //If parent node, do calculations associated to entire process, else don't execute this.
+    if (depth == 0){ //If parent node, do calculations associated to entire process, else don't execute this.
         for (int i = 0; i < PN; i++) { // TODO: Update DFS average calculation
             totalKeys += keyCount[i];
             avgKey += avg[i];
@@ -359,4 +267,97 @@ int DFSSearch(int PN, int * splitPoints, int * RandVals, int depth){
         printf("DFS time duration: %lf\n", cpu_time_used_dfs);
         return 0;
     }
+}
+
+// MAIN
+int main(int argc, char *argv[]) {
+    FILE *fptr;
+
+    // Set up serial time measurements
+    clock_t startSerial, endSerial;
+    double cpu_time_used_serial;
+    startSerial = clock();
+
+    // Initialize random generator
+    srand(time(NULL));
+
+    // Incorrect number of arguments
+    if (argc != 4) {
+        printf("Incorrect number of arguments (%d), should be 3!\n", argc-1);
+        exit(1);
+    }
+
+    // Get values of program arguments
+    int L = atoi(argv[1]);
+    int H = atoi(argv[2]);
+    int PN = atoi(argv[3]);
+
+    // Check L bounds
+    if (L < 10000) {
+        printf("Invalid L value (%d). L needs to be at least 10,000!\n", L);
+        exit(1);
+    }
+
+    // Check H bounds
+    if ((H < 30) || (H > 60)) {
+        printf("Invalid H value (%d). H needs to be between 30 and 60!\n", H);
+        exit(1);
+    }
+
+    // Check PN bounds
+    if ((PN < 1) || (PN > 8)) {
+        printf("Invalid PN value (%d). PN needs to be between 1 and 8!\n", PN);
+        exit(1);
+    }
+
+    // Generate randomized file
+    int genReturnCode = genRandomVals(L, H);
+    if (!genReturnCode) {
+        printf("Random generation complete.\n");
+    }
+    else {
+        printf("Error! Random file could not be generated!\n");
+        return 1;
+    }
+
+    // Open generated random file and read vals into array
+    fptr = fopen("generatedList.txt", "r");
+    if (!fptr) { // Error on file open
+        printf("Error! Random generated file could not be opened!\n");
+        return 2;
+    }
+    int randVals[L];
+    int bufferLen = 255;
+    char buffer[bufferLen];
+    int i = 0;
+    while(fgets(buffer, bufferLen, fptr)) { // Reads values into randVals from file
+        randVals[i] = atoi(buffer);
+        i++;
+    }   
+    /*for (int i = 0; i < L; i++) {
+        printf("Value #%d: %d\n", i+1, randVals[i]);
+    }*/
+    fclose(fptr);
+
+    // Statically calculate split points for array
+    int splitPoints[PN];
+    int splitSize = L / PN;
+    printf("Split size: %d\n", splitSize);
+    splitPoints[0] = 0;
+    splitPoints[PN] = L;
+    for (int i = 1; i < PN; i++) {
+        splitPoints[i] = i * splitSize;
+    }
+    for (int i = 0; i < PN+1; i++) {
+        printf("Split point #%d: %d\n", i, splitPoints[i]);
+    }
+
+    // Measure time taken by serial (non-parallel) code
+    endSerial = clock();
+    cpu_time_used_serial = ((double) (endSerial - startSerial)) / CLOCKS_PER_SEC;
+    printf("Serial time duration: %lf\n", cpu_time_used_serial);    // Return
+    return 0;
+    int BFS = BFSSearch(PN, splitPoints, randVals);
+    printf("Beginning DFS key search...\n");
+    int DFS = DFSSearch(PN, splitPoints, randVals, 0);
 }
