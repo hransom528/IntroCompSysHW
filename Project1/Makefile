@@ -7,7 +7,7 @@ Project1: Project1.c
 	$(CC) $(CFLAGS) Project1.c -o Project1
 	chmod +x Project1
 
-Project1: Project1Liam.c
+Project1Liam: Project1Liam.c
 	$(CC) $(CFLAGS) Project1Liam.c -o Project1Liam
 	chmod +x Project1Liam
 
