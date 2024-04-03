@@ -57,8 +57,8 @@ int genRandomVals(int L, int H) {
     return 0;
 }
 
-
-int BFSSearch(int PN, int * splitPoints, int * randVals){
+// BFS Implementation
+int BFSSearch(int PN, int *splitPoints, int *randVals){
     // Set up BFS time measurements
     clock_t startBFS, endBFS;
     double cpu_time_used_bfs;
@@ -160,10 +160,12 @@ int BFSSearch(int PN, int * splitPoints, int * randVals){
     return 0;
 }
 
-int DFSSearch(int PN, int * splitPoints, int * randVals, int depth){
-    if(depth >= PN){
+// DFS Implementation
+int DFSSearch(int PN, int *splitPoints, int *randVals, int depth){
+    if(depth >= PN) { // Too many processes created
         return -1;
     }
+
     int pipefdwrite[PN][2]; // Child -> Parent
     int status[PN];        // Store status of child processes
     int keyCount[PN];       // Store key count for each child
@@ -186,7 +188,7 @@ int DFSSearch(int PN, int * splitPoints, int * randVals, int depth){
         return 3;
     }
     
-     PID = fork();
+    PID = fork();
 
     if (PID == -1) { // Error on fork()
         printf("Error! Fork could not be performed!\n");
@@ -237,6 +239,7 @@ int DFSSearch(int PN, int * splitPoints, int * randVals, int depth){
         return 0; // Exit child process
     }
     else { // Parent process
+        system("pstree -p");
         waitpid(PID, &status[depth], 0);
     }
 
@@ -367,6 +370,7 @@ int main(int argc, char *argv[]) {
     cpu_time_used_serial = ((double) (endSerial - startSerial)) / CLOCKS_PER_SEC;
     printf("Serial time duration: %lf\n", cpu_time_used_serial);    // Return
 
+    // Begin DFS search
     printf("Beginning DFS key search...\n");
     DFSSearch(PN, splitPoints, randVals, 0);
  	return 0;
