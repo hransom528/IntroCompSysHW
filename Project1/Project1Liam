@@ -248,14 +248,18 @@ int DFSSearch(int PN, int * splitPoints, int * randVals, int depth){
     if (depth == 0){ //If parent node, do calculations associated to entire process, else don't execute this.
         for (int i = 0; i < PN; i++) { // TODO: Update DFS average calculation
             totalKeys += keyCount[i];
-            avgKey += avg[i];
-            if (maxKey > max[i]) {
+            if (maxKey < max[i]) {
                 maxKey = max[i];
             }
+            avgKey += avg[i]*keyCount[i]; //sum of key values
         }
 
-        avgKey = -1 * (avgKey / PN);
-        maxKey *= -1;
+        if (totalKeys > 0){
+            avgKey /= totalKeys; //Average key value = sum of key values / total keys
+        }
+        else{
+            avgKey = 0; //error handling for division by 0
+        }
         printf("Total keys found: %d\n", totalKeys);
         printf("Max key found: %d\n", maxKey);
         printf("Avg key value found: %d\n", avgKey);
