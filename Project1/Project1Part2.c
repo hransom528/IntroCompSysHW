@@ -126,7 +126,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             write(pipefdwrite[i][1], &avg, sizeof(avg));
             write(pipefdwrite[i][1], &childPID, sizeof(childPID));
             close(pipefdwrite[i][1]);
-	    printf("PID: %d Max: %d\n", childPID, max);
+	    printf("PID: %d Max: %d KeyCount: %d Avg: %d\n", childPID, max, keyCount, avg);
             raise(SIGSTOP);
             printf("Hi I\'m process %d. I continued due to having the greatest maximum.\n", childPID);
 	    sleep(100);
@@ -153,7 +153,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     for (int i = 0; i < PN; i++) { // TODO: Update BFS average calculation
         totalKeys += keyCount[i];
         avgKey += avg[i];
-        if (maxKey > max[i]) {
+        if (maxKey < max[i]) {
             maxKey = max[i];
         }
     }
@@ -163,25 +163,48 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     //RULE 1
     
     // Find the index of the process with the highest max value
-    int highest_max_index = 0;
+    int indexMax = 0;
     for (int i = 1; i < PN; i++) {
-        if (max[i] > max[highest_max_index]) {
-            highest_max_index = i;
+        if (max[i] > max[indexMax]) {
+            indexMax = i;
         }
     }
 
     // Continue the process with the highest max value
-    if (cpid[highest_max_index] > 0) {
-        kill(cpid[highest_max_index], SIGCONT);
-        printf("Continuing process with the highest max value (PID: %d)\n", cpid[highest_max_index]);
+    if (cpid[indexMax] > 0) {
+        kill(cpid[indexMax], SIGCONT);
+        printf("Continuing process#%d with the highest max value (PID: %d)\n",indexMax, cpid[indexMax]);
+        //waitpid(cpid[indexMax], NULL, 0);
     }
+    
+    //RULE 2
+    
+    //Find the index of the process with the highest amount of hidden keys (excluding the maxChild)
+    int indexMaxKeyCount = 0;
+    for (int i = 1; i < PN; i++) {
+    	if(i != indexMax && cpid[i] != cpid[indexMax]){
+        	if (keyCount[i] > keyCount[indexMaxKeyCount]) {
+            		indexMaxKeyCount = i;
+        	}
+        }
+    }
+    
+    // Kill the process with the highest Key Count, as long as valid PID and not the same index as Rule 1.
+    if (cpid[indexMaxKeyCount] > 0 && indexMaxKeyCount != indexMax) {
+        kill(cpid[indexMaxKeyCount], SIGKILL);
+        printf("Killing process#%d with the highest Key Count value (PID: %d)\n",indexMaxKeyCount, cpid[indexMaxKeyCount]);
+ 
+    }
+    
+    //RULE 3
+    
     
 
     // Measure time taken by parallelized BFS code
     endBFS = clock();
     cpu_time_used_bfs = ((double) (endBFS - startBFS)) / CLOCKS_PER_SEC;
     printf("BFS time duration: %lf\n", cpu_time_used_bfs);
-    return 0;
+    exit(0);
 }
 
 // DFS Implementation
