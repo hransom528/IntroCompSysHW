@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
-
 // Generate file with list of L random integers and H random keys
 int genRandomVals(int L, int H) {
     // Attempt to create the file
@@ -125,7 +124,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             close(pipefdwrite[i][1]);
 
             // Raise SIGSTP
-            raise(SIGSTP);
+            raise(SIGTSTP);
             
 
             // Exit child process
