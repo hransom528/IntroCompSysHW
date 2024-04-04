@@ -160,38 +160,8 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     return 0;
 }
 
-// DFS Initialization Function
-int DFS(int PN, int *splitPoints, int *randVals) {
-    int pipefdwrite[PN][2]; // Child -> Parent
-    //int status[PN];        // Store status of child processes
-
-    // Create pipe for the child process
-    for (int i = 0; i < PN; i++) {
-        if (pipe(pipefdwrite[i]) == -1) {
-            printf("Error! Pipe could not be created!\n");
-            return 3;
-        }
-        // Close writing end for parent
-        close(pipefdwrite[i][1]);
-    }
-
-    // Set up DFS time measurement
-    clock_t startDFS, endDFS;
-    double cpu_time_used_dfs;
-    startDFS = clock();
-
-    // Begin DFS search
-    DFSSearch(PN, splitPoints, randVals, pipefdwrite, 0);
-
-    // Measure time taken by parallelized BFS code
-    endDFS = clock();
-    cpu_time_used_dfs = ((double)(endDFS - startDFS)) / CLOCKS_PER_SEC;
-    printf("DFS time duration: %lf\n", cpu_time_used_dfs);
-    return 0;
-}
-
 // DFS Implementation
-int DFSSearch(int PN, int *splitPoints, int *randVals, int **pipefdwrite, int depth){
+int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], int depth){
     if(depth >= PN) { // Too many processes created
         return -1;
     }
@@ -256,7 +226,7 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int **pipefdwrite, int de
     else { // Parent process
         //system("pstree -p");
         int status; // Store status of child process
-        waitpid(PID, &status[depth], 0);
+        waitpid(PID, &status, 0);
     }
 
     if (depth == 0 && PID != 0) { // If parent node, do calculations associated to entire process, else don't execute this.
@@ -293,6 +263,36 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int **pipefdwrite, int de
         printf("Max key found: %d\n", maxKey);
         printf("Avg key value found: %d\n", avgKey);
     }
+    return 0;
+}
+
+// DFS Initialization Function
+int DFS(int PN, int *splitPoints, int *randVals) {
+    int pipefdwrite[PN][2]; // Child -> Parent
+    //int status[PN];        // Store status of child processes
+
+    // Create pipe for the child process
+    for (int i = 0; i < PN; i++) {
+        if (pipe(pipefdwrite[i]) == -1) {
+            printf("Error! Pipe could not be created!\n");
+            return 3;
+        }
+        // Close writing end for parent
+        close(pipefdwrite[i][1]);
+    }
+
+    // Set up DFS time measurement
+    clock_t startDFS, endDFS;
+    double cpu_time_used_dfs;
+    startDFS = clock();
+
+    // Begin DFS search
+    DFSSearch(PN, splitPoints, randVals, pipefdwrite, 0);
+
+    // Measure time taken by parallelized BFS code
+    endDFS = clock();
+    cpu_time_used_dfs = ((double)(endDFS - startDFS)) / CLOCKS_PER_SEC;
+    printf("DFS time duration: %lf\n", cpu_time_used_dfs);
     return 0;
 }
 
