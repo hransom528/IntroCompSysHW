@@ -116,7 +116,8 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             // Print out process info
             pid_t childPID = getpid();
             pid_t parentPID = getppid();
-            printf("Hi I\'m process process %d with return arg %d and my parent is %d.\n", childPID, keyCount, parentPID);
+            int returnCode = childPID % 100;
+            printf("Hi I\'m process %d with return arg %d and my parent is %d.\n", childPID, returnCode, parentPID);
 
             // Write keyCount, max, and avg to parent
             write(pipefdwrite[i][1], &keyCount, sizeof(keyCount));
@@ -125,7 +126,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             close(pipefdwrite[i][1]);
 
             // Exit child process
-            exit(0);
+            exit(returnCode);
             return 0; 
         }
         else { // Parent process
@@ -204,7 +205,8 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
         // Print out process info
         pid_t childPID = getpid();
         pid_t parentPID = getppid();
-        printf("Hi I\'m process process %d with return arg %d and my parent is %d.\n", childPID, keyCount, parentPID);
+        int returnCode = childPID % 100;
+        printf("Hi I\'m process %d with return arg %d and my parent is %d.\n", childPID, returnCode, parentPID);
 
         // Write keyCount, max, and avg to parent
         write(pipefdwrite[depth-1][1], &localkey, sizeof(localkey));
@@ -221,7 +223,7 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
         }
 
         // Exit child process
-        exit(0);
+        exit(returnCode);
         return 0; 
     }
     else { // Parent process
@@ -365,7 +367,7 @@ int main(int argc, char *argv[]) {
         splitPoints[i] = i * splitSize;
     }
     for (int i = 0; i < PN+1; i++) {
-        printf("Split point #%d: %d\n", i, splitPoints[i]);
+    //   printf("Split point #%d: %d\n", i, splitPoints[i]);
     }
 
     // Measure time taken by serial (non-parallel) code
@@ -374,7 +376,7 @@ int main(int argc, char *argv[]) {
     printf("Serial time duration: %lf\n", cpu_time_used_serial);    // Return
 
     // Perform BFS search
-    int BFSReturnCode = BFSSearch(PN, splitPoints, randVals);
+    BFSSearch(PN, splitPoints, randVals);
 
     // Set up DFS time measurement
     clock_t startDFS, endDFS;
@@ -383,7 +385,7 @@ int main(int argc, char *argv[]) {
 
     // Perform DFS search
     printf("\nBeginning DFS key search...\n");
-    int DFSReturnCode = DFS(PN, splitPoints, randVals);
+    DFS(PN, splitPoints, randVals);
 
     // Measure time taken by parallelized BFS code
     endDFS = clock();
