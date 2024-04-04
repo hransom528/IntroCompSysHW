@@ -89,11 +89,6 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             return 4;
         }
         else if (pid == 0) { // Child process
-            // Print out process info
-            pid_t childPID = getpid();
-            pid_t parentPID = getppid();
-            printf("Child process #%d created with PID: %d and Parent PID: %d\n", i, childPID, parentPID);
-
             int keyCount = 0;
             int max = 0;
             int avg = 0;
@@ -117,6 +112,11 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
                 }
             }
             avg = avg / keyCount;
+
+            // Print out process info
+            pid_t childPID = getpid();
+            pid_t parentPID = getppid();
+            printf("Hi I\'m process process %d with return arg %d and my parent is %d.\n", childPID, keyCount, parentPID);
 
             // Write keyCount, max, and avg to parent
             write(pipefdwrite[i][1], &keyCount, sizeof(keyCount));
@@ -151,9 +151,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     }
     avgKey = -1 * (avgKey / PN);
     maxKey *= -1;
-    printf("Total keys found: %d\n", totalKeys);
-    printf("Max key found: %d\n", maxKey);
-    printf("Avg key value found: %d\n", avgKey);
+    printf("Max = %d, Avg = %d\n", maxKey, avgKey);
 
     // Measure time taken by parallelized BFS code
     endBFS = clock();
@@ -180,11 +178,6 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
         // Increment depth
         depth++;
 
-        // Print out process info
-        pid_t childPID = getpid();
-        pid_t parentPID = getppid();
-        printf("Child process #%d created with PID: %d and Parent PID: %d\n", depth, childPID, parentPID);
-
         int localkey = 0;
         int localmax = 0;
        	int localavg = 0;
@@ -207,6 +200,11 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
             }
         }
         localavg = localavg / localkey;
+
+        // Print out process info
+        pid_t childPID = getpid();
+        pid_t parentPID = getppid();
+        printf("Hi I\'m process process %d with return arg %d and my parent is %d.\n", childPID, keyCount, parentPID);
 
         // Write keyCount, max, and avg to parent
         write(pipefdwrite[depth-1][1], &localkey, sizeof(localkey));
@@ -263,9 +261,7 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
 
         avgKey = -1 * (avgKey / PN);
         maxKey *= -1;
-        printf("Total keys found: %d\n", totalKeys);
-        printf("Max key found: %d\n", maxKey);
-        printf("Avg key value found: %d\n", avgKey);
+        printf("Max = %d, Avg = %d\n", maxKey, avgKey);
     }
     return 0;
 }
