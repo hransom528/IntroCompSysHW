@@ -74,6 +74,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     int maxKey = 0;
     int avgKey = 0;
     pid_t pid = 1;
+    pid_t cpid[PN];
     printf("\nBeginning BFS key search...\n");
     for (int i = 0; (i < PN) && pid; i++) {
         // Create pipe for ith child process
@@ -112,26 +113,29 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
                 }
             }
             avg = avg / keyCount;
-
+            max = -1*max;
             // Print out process info
             pid_t childPID = getpid();
             pid_t parentPID = getppid();
             int returnCode = childPID % 100;
             printf("Hi I\'m process %d with return arg %d and my parent is %d.\n", childPID, returnCode, parentPID);
-
+	
             // Write keyCount, max, and avg to parent
             write(pipefdwrite[i][1], &keyCount, sizeof(keyCount));
             write(pipefdwrite[i][1], &max, sizeof(max));
             write(pipefdwrite[i][1], &avg, sizeof(avg));
+            write(pipefdwrite[i][1], &childPID, sizeof(childPID));
             close(pipefdwrite[i][1]);
-
+	    printf("PID: %d Max: %d\n", childPID, max);
             raise(SIGSTOP);
-
+            printf("Hi I\'m process %d. I continued due to having the greatest maximum.\n", childPID);
+	    sleep(100);
             // Exit child process
             exit(returnCode);
             return 0; 
         }
         else { // Parent process
+            //Stores PID of child into array to reference when using the rules.
             // Close writing end for parent
             close(pipefdwrite[i][1]);
 
@@ -139,6 +143,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             read(pipefdwrite[i][0], &keyCount[i], sizeof(keyCount[i]));
             read(pipefdwrite[i][0], &max[i], sizeof(max[i]));
             read(pipefdwrite[i][0], &avg[i], sizeof(avg[i]));
+            read(pipefdwrite[i][0], &cpid[i], sizeof(cpid[i]));
 
             // Inspect BFS process tree
             //int pstreeCode = system("pstree -p");
@@ -153,8 +158,24 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
         }
     }
     avgKey = -1 * (avgKey / PN);
-    maxKey *= -1;
     printf("Max = %d, Avg = %d\n", maxKey, avgKey);
+    
+    //RULE 1
+    
+    // Find the index of the process with the highest max value
+    int highest_max_index = 0;
+    for (int i = 1; i < PN; i++) {
+        if (max[i] > max[highest_max_index]) {
+            highest_max_index = i;
+        }
+    }
+
+    // Continue the process with the highest max value
+    if (cpid[highest_max_index] > 0) {
+        kill(cpid[highest_max_index], SIGCONT);
+        printf("Continuing process with the highest max value (PID: %d)\n", cpid[highest_max_index]);
+    }
+    
 
     // Measure time taken by parallelized BFS code
     endBFS = clock();
