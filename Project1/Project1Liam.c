@@ -74,7 +74,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     int maxKey = 0;
     int avgKey = 0;
     pid_t pid = 1;
-    printf("Beginning BFS key search...\n");
+    printf("\nBeginning BFS key search...\n");
     for (int i = 0; (i < PN) && pid; i++) {
         // Create pipe for ith child process
         if (pipe(pipefdwrite[i]) == -1) {
@@ -124,7 +124,9 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
             write(pipefdwrite[i][1], &avg, sizeof(avg));
             close(pipefdwrite[i][1]);
 
-            return 0; // Exit child process
+            // Exit child process
+            exit(0);
+            return 0; 
         }
         else { // Parent process
             // Close writing end for parent
@@ -189,7 +191,6 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
         int startPoint = splitPoints[depth-1];
         int endPoint = splitPoints[depth];
         //int len = endPoint - startPoint;
-        close(pipefdwrite[depth-1][0]);
 
         for(int j = startPoint; j < endPoint; j++) {
             // Checks iteratively if its a key value and counts it.
@@ -209,11 +210,11 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
 
         // Write keyCount, max, and avg to parent
         write(pipefdwrite[depth-1][1], &localkey, sizeof(localkey));
-        printf("Write Keycount of PID %d: %d\n",childPID, localkey);
+        //printf("Write Keycount of PID %d: %d\n",childPID, localkey);
         write(pipefdwrite[depth-1][1], &localmax, sizeof(localmax));
-        printf("Write Max of PID %d: %d\n",childPID, localmax);
+        //printf("Write Max of PID %d: %d\n",childPID, localmax);
         write(pipefdwrite[depth-1][1], &localavg, sizeof(localavg));
-        printf("Write Avg of PID %d: %d\n",childPID, localavg);
+        //printf("Write Avg of PID %d: %d\n",childPID, localavg);
         close(pipefdwrite[depth-1][1]);
 	
         //Recursively create leaves.
@@ -221,11 +222,14 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
             DFSSearch(PN, splitPoints, randVals, pipefdwrite, depth);
         }
 
-        return 0; // Exit child process
+        // Exit child process
+        exit(0);
+        return 0; 
     }
     else { // Parent process
         //system("pstree -p");
         int status; // Store status of child process
+        //printf("Parent process %d waiting on process %d\n", getpid(), PID);
         waitpid(PID, &status, 0);
     }
 
@@ -236,20 +240,20 @@ int DFSSearch(int PN, int *splitPoints, int *randVals, int (*pipefdwrite)[2], in
         int totalKeys = 0;
         int maxKey = 0;
         int avgKey = 0;
-        for (int i = PN - 1; i >= 0; i--) {
+        for (int i = 0; i < PN; i++) {
             // Read data from child
             read(pipefdwrite[i][0], &keyCount[i], sizeof(keyCount[i]));
-            printf("Read Keycount of PID %d: %d\n", PID, keyCount[i]);
+            //printf("Read Keycount of PID %d: %d\n", PID, keyCount[i]);
             read(pipefdwrite[i][0], &max[i], sizeof(max[i]));
-            printf("Read Max of PID %d: %d\n", PID, max[i]);
+            //printf("Read Max of PID %d: %d\n", PID, max[i]);
             read(pipefdwrite[i][0], &avg[i], sizeof(avg[i]));
-            printf("Read Avg of PID %d: %d\n", PID, avg[i]);
+            //printf("Read Avg of PID %d: %d\n", PID, avg[i]);
             // Inspect DFS process tree
             // int pstreeCode = system("pstree -p");
         }
 
         for (int i = 0; i < PN; i++) { // TODO: Update DFS average calculation
-            printf("avg #%d: %d\n", i, avg[i]);
+            //printf("avg #%d: %d\n", i, avg[i]);
             totalKeys += keyCount[i];
             avgKey += avg[i];
             if (max[i] < maxKey) {
@@ -277,22 +281,11 @@ int DFS(int PN, int *splitPoints, int *randVals) {
             printf("Error! Pipe could not be created!\n");
             return 3;
         }
-        // Close writing end for parent
-        close(pipefdwrite[i][1]);
     }
-
-    // Set up DFS time measurement
-    clock_t startDFS, endDFS;
-    double cpu_time_used_dfs;
-    startDFS = clock();
 
     // Begin DFS search
     DFSSearch(PN, splitPoints, randVals, pipefdwrite, 0);
 
-    // Measure time taken by parallelized BFS code
-    endDFS = clock();
-    cpu_time_used_dfs = ((double)(endDFS - startDFS)) / CLOCKS_PER_SEC;
-    printf("DFS time duration: %lf\n", cpu_time_used_dfs);
     return 0;
 }
 
@@ -384,8 +377,23 @@ int main(int argc, char *argv[]) {
     cpu_time_used_serial = ((double) (endSerial - startSerial)) / CLOCKS_PER_SEC;
     printf("Serial time duration: %lf\n", cpu_time_used_serial);    // Return
 
-    // Begin DFS search
-    printf("Beginning DFS key search...\n");
+    // Perform BFS search
+    int BFSReturnCode = BFSSearch(PN, splitPoints, randVals);
+
+    // Set up DFS time measurement
+    clock_t startDFS, endDFS;
+    double cpu_time_used_dfs;
+    startDFS = clock();
+
+    // Perform DFS search
+    printf("\nBeginning DFS key search...\n");
     int DFSReturnCode = DFS(PN, splitPoints, randVals);
+
+    // Measure time taken by parallelized BFS code
+    endDFS = clock();
+    cpu_time_used_dfs = ((double)(endDFS - startDFS)) / CLOCKS_PER_SEC;
+    printf("DFS time duration: %lf\n", cpu_time_used_dfs);
+
+    // Exit
  	return 0;
 }
