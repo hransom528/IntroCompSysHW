@@ -75,6 +75,9 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     int avgKey = 0;
     pid_t pid = 1;
     pid_t cpid[PN];
+    int rule = 0;
+    
+    
     printf("\nBeginning BFS key search...\n");
     for (int i = 0; (i < PN) && pid; i++) {
         // Create pipe for ith child process
@@ -129,10 +132,10 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
 	    printf("PID: %d Max: %d KeyCount: %d Avg: %d\n", childPID, max, keyCount, avg);
             raise(SIGSTOP);
             printf("Hi I\'m process %d. I continued due to having the greatest maximum.\n", childPID);
-	    sleep(100);
+	    sleep(1);
             // Exit child process
             exit(returnCode);
-            return 0; 
+            //return 0; 
         }
         else { // Parent process
             //Stores PID of child into array to reference when using the rules.
@@ -193,10 +196,16 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     if (cpid[indexMaxKeyCount] > 0 && indexMaxKeyCount != indexMax) {
         kill(cpid[indexMaxKeyCount], SIGKILL);
         printf("Killing process#%d with the highest Key Count value (PID: %d)\n",indexMaxKeyCount, cpid[indexMaxKeyCount]);
- 
     }
     
     //RULE 3
+    for (int i = 1; i < PN; i++) {
+    	if(i != indexMax && cpid[i] != cpid[indexMax]){
+        	if (keyCount[i] > keyCount[indexMaxKeyCount]) {
+            		indexMaxKeyCount = i;
+        	}
+        }
+    }
     
     
 
@@ -204,7 +213,7 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
     endBFS = clock();
     cpu_time_used_bfs = ((double) (endBFS - startBFS)) / CLOCKS_PER_SEC;
     printf("BFS time duration: %lf\n", cpu_time_used_bfs);
-    exit(0);
+    return 0;
 }
 
 // DFS Implementation
