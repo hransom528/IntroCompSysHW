@@ -179,35 +179,34 @@ int BFSSearch(int PN, int *splitPoints, int *randVals){
         printf("Continuing process#%d with the highest max value (PID: %d)\n",indexMax, cpid[indexMax]);
         //waitpid(cpid[indexMax], NULL, 0);
     }
-    
-    //RULE 2
-    
-    //Find the index of the process with the highest amount of hidden keys (excluding the maxChild)
-    int indexMaxKeyCount = 0;
-    for (int i = 1; i < PN; i++) {
-    	if(i != indexMax && cpid[i] != cpid[indexMax]){
-        	if (keyCount[i] > keyCount[indexMaxKeyCount]) {
-            		indexMaxKeyCount = i;
-        	}
+    else {
+        //Find the index of the process with the highest amount of hidden keys (excluding the maxChild)
+        int indexMaxKeyCount = 0;
+        for (int i = 1; i < PN; i++) {
+            if(i != indexMax && cpid[i] != cpid[indexMax]){
+                if (keyCount[i] > keyCount[indexMaxKeyCount]) {
+                        indexMaxKeyCount = i;
+                }
+            }
+        }
+
+        //RULE 2
+        // Kill the process with the highest Key Count, as long as valid PID and not the same index as Rule 1.
+        if (cpid[indexMaxKeyCount] > 0 && indexMaxKeyCount != indexMax) {
+            kill(cpid[indexMaxKeyCount], SIGKILL);
+            printf("Killing process#%d with the highest Key Count value (PID: %d)\n",indexMaxKeyCount, cpid[indexMaxKeyCount]);
+        }
+        else {
+            //RULE 3
+            for (int i = 1; i < PN; i++) {
+                if(i != indexMax && cpid[i] != cpid[indexMax]){
+                    if (keyCount[i] > keyCount[indexMaxKeyCount]) {
+                            indexMaxKeyCount = i;
+                    }
+                }
+            }
         }
     }
-    
-    // Kill the process with the highest Key Count, as long as valid PID and not the same index as Rule 1.
-    if (cpid[indexMaxKeyCount] > 0 && indexMaxKeyCount != indexMax) {
-        kill(cpid[indexMaxKeyCount], SIGKILL);
-        printf("Killing process#%d with the highest Key Count value (PID: %d)\n",indexMaxKeyCount, cpid[indexMaxKeyCount]);
-    }
-    
-    //RULE 3
-    for (int i = 1; i < PN; i++) {
-    	if(i != indexMax && cpid[i] != cpid[indexMax]){
-        	if (keyCount[i] > keyCount[indexMaxKeyCount]) {
-            		indexMaxKeyCount = i;
-        	}
-        }
-    }
-    
-    
 
     // Measure time taken by parallelized BFS code
     endBFS = clock();
