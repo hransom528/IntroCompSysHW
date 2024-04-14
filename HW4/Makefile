@@ -1,0 +1,19 @@
+CC = gcc
+CFLAGS = -Wall -O2
+
+all: HW4Q4 HW4Q5A HW4Q5B
+
+HW4Q4: HW4Q4.c
+	$(CC) $(CFLAGS) HW4Q4.c -o HW4Q4
+	chmod +x HW4Q4
+
+HW4Q5A: HW4Q5A.c
+	$(CC) $(CFLAGS) HW4Q5A.c -o HW4Q5A
+	chmod +x HW4Q5A
+
+HW4Q5B: HW4Q5B.c
+	g++ $(CFLAGS) HW4Q5B.c -o HW4Q5B
+	chmod +x HW4Q5B
+
+clean:
+	rm HW4Q4 HW4Q5A HW4Q5B
