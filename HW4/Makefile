@@ -11,8 +11,8 @@ HW4Q5A: HW4Q5A.c
 	$(CC) $(CFLAGS) HW4Q5A.c -o HW4Q5A
 	chmod +x HW4Q5A
 
-HW4Q5B: HW4Q5B.c
-	g++ $(CFLAGS) HW4Q5B.c -o HW4Q5B
+HW4Q5B: HW4Q5B.cpp
+	g++ $(CFLAGS) HW4Q5B.cpp -o HW4Q5B
 	chmod +x HW4Q5B
 
 clean:

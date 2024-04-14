@@ -4,7 +4,7 @@
 #include <pthread.h>
 
 // Child thread function
-void *childThread(void *arg) {
+void *childThreadFunc(void *arg) {
     int n = *((int *) arg);
     int *fib = malloc(sizeof(int) * n);
 
@@ -30,15 +30,17 @@ int main(int argc, char *argv[]) {
     }
 
     // Create child thread
-    int *result;
-    pthread_create(&childThread, NULL, (void *) &printHello, (void *) &n);
+    pthread_create(&childThread, NULL, &childThreadFunc, (void *) &n);
     
     // Wait for child thread to finish executing
+    int *result = (int *) malloc(sizeof(int) * n);
+    pthread_join(childThread, (void **)&result);
 
-    pthread_join(childThread, (void *) &result);
-
-    // TODO: Collect and output results
+    // Collect and output results
+    for (int i = 0; i < n; i ++)  {
+        printf("%d ", result[i]);
+    }
+    printf("\n");
     
-
     return 0;
 }

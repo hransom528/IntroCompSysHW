@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define n 3 // Number of threads
-
 
 void *func1(void *arg) {
     for (int i=0; i < 10; i++) {
@@ -39,8 +39,10 @@ int main() {
     pthread_create(&thread3, NULL, (void *) func3, NULL);
 
     // Signal experiments
-    kill(getpid(), SIGINT);
-    pthread_kill(thread1, SIGINT);
+    printf("Before SIGINT signals\n");
+    //kill(getpid(), SIGINT);
+    //pthread_kill(thread2, SIGINT);
+    printf("After SIGINT signals\n");
 
     // Wait for threads to finish
     pthread_join(thread1, NULL);

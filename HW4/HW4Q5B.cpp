@@ -3,7 +3,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <pthread.h>
-
+#include <vector>
 using namespace std;
 
 // Sieve of Eratosphenes
