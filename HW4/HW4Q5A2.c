@@ -1,26 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <pthread.h>
 
-typedef struct {
+typedef struct threadStruct {
     int n;
     int *fib;
     bool *done;
+    bool lock;
 } fibStruct;
 
 // Child thread function
 void *childThreadFunc(void *arg) {
     fibStruct *fs = (fibStruct *) arg;
-
+    
     // Calculate Fib series
     fs->fib[0] = 1;
     fs->fib[1] = 1;
-    for (int i = 2; i < n; i++) {
+    fs->done[0] = true;
+    fs->done[1] = true;
+    for (int i = 2; i < fs->n; i++) {
         fs->fib[i] = fs->fib[i-1] + fs->fib[i-2];
+        //printf("fib[i]: %d", fs->fib[i]);
         fs->done[i] = true;
     }
-
     return NULL;
 }
 
@@ -36,19 +40,27 @@ int main(int argc, char *argv[]) {
     }
 
     // Create child thread
-    fibStruct fs;
-    fs.n = n;
-    fs.fib = (int *) malloc(sizeof(int) * n);
-    fs.done = (bool *) calloc(n, sizeof(bool));
-    pthread_create(&childThread, NULL, &childThreadFunc, (void *) &fs);
+    fibStruct *fs = malloc(sizeof(fibStruct));
+    fs->n = n;
+    fs->fib = (int *) malloc(sizeof(int) * n);
+    fs->done = (bool *) calloc(n, sizeof(bool));
+    fs->lock = true;
+    pthread_create(&childThread, NULL, &childThreadFunc, (void *) fs);
     
-    // Wait for child thread to finish executing
-    int i = 0;
-    while (fs.done[n-1] == false) {
-        if (fs.done[i]) {
-            printf("%d ", fs.fib[i]);
-            i++;
+    // Grab current items
+    int index = 0;
+    while (!fs->done[n-1]) {
+        for (int i = index; i < n; i++) {
+            if (fs->done[i]) {
+                printf("%d ", fs->fib[i]);
+                index++;
+            }
         }
+    }
+    
+    // Print out remaining items
+    for (int j = index; j < n; j++) {
+        printf("%d ", fs->fib[j]);
     }
     pthread_join(childThread, NULL);
     printf("\n");
