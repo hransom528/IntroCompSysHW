@@ -22,7 +22,6 @@ void *childThreadFunc(void *arg) {
     fs->done[1] = true;
     for (int i = 2; i < fs->n; i++) {
         fs->fib[i] = fs->fib[i-1] + fs->fib[i-2];
-        //printf("fib[i]: %d", fs->fib[i]);
         fs->done[i] = true;
     }
     return NULL;
@@ -46,24 +45,28 @@ int main(int argc, char *argv[]) {
     fs->done = (bool *) calloc(n, sizeof(bool));
     fs->lock = true;
     pthread_create(&childThread, NULL, &childThreadFunc, (void *) fs);
-    
-    sleep(1);
 
     // Grab current items
     int index = 0;
-    while (!fs->done[n-1]) {
+    int results[n];
+    while ((index != n) || (!fs->done[n-1])) {
         for (int i = index; i < n; i++) {
             if (fs->done[i]) {
                 printf("%d ", fs->fib[i]);
+                results[i] = fs->fib[i];
                 index++;
             }
         }
+        sleep(0.0001);
     }
-    
-    // Print out remaining items
-    for (int j = index; j < n; j++) {
-        printf("%d ", fs->fib[j]);
-    }
+
+    // Print out results array
+    /*
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", results[i]);
+    }*/
+
     pthread_join(childThread, NULL);
     printf("\n");
     
