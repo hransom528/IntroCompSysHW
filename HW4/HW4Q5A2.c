@@ -8,7 +8,6 @@ typedef struct threadStruct {
     int n;
     int *fib;
     bool *done;
-    bool lock;
 } fibStruct;
 
 // Child thread function
@@ -43,7 +42,6 @@ int main(int argc, char *argv[]) {
     fs->n = n;
     fs->fib = (int *) malloc(sizeof(int) * n);
     fs->done = (bool *) calloc(n, sizeof(bool));
-    fs->lock = true;
     pthread_create(&childThread, NULL, &childThreadFunc, (void *) fs);
 
     // Grab current items
