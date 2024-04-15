@@ -47,6 +47,8 @@ int main(int argc, char *argv[]) {
     fs->lock = true;
     pthread_create(&childThread, NULL, &childThreadFunc, (void *) fs);
     
+    sleep(1);
+
     // Grab current items
     int index = 0;
     while (!fs->done[n-1]) {
